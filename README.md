@@ -95,9 +95,3 @@ npm run dev
 ```
 
 ---
-
-## 🏆 Assessment Highlights
-- **Architecture Score:** 10/10 (Modular, Async, Scalable, Consolidated Git)
-- **ML Score:** 10/10 (Groq, Threshold-logic, Few-Shot, Reasoning)
-- **UI Score:** 10/10 (Fullscreen, Premium Dark Mode, Confidence Visuals)
-- **QA Score:** 10/10 (Comprehensive Test Suite across all layers)
