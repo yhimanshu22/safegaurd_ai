@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Shield, AlertTriangle, CheckCircle, BarChart3, RotateCcw, Trash2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react';
 
 const API_BASE = "http://localhost:8000";
 
 interface Post {
   id: number;
-  content: str;
+  content: string;
   status: string;
   toxicity_score: number;
   reason?: string;
@@ -65,7 +65,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-8 w-full max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-950 text-slate-200 p-8 w-full">
       <header className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
