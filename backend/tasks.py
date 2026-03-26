@@ -2,7 +2,7 @@ import os
 import httpx
 from celery import Celery
 from sqlmodel import Session, select
-from .models import Post, engine
+from models import Post, engine
 from datetime import datetime
 
 # Initialize Celery

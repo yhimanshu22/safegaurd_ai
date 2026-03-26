@@ -3,9 +3,9 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from datetime import datetime
-from .models import Post, Metric, engine, create_db_and_tables
-from .tasks import moderate_post_task
-from .metrics import calculate_metrics
+from models import Post, Metric, engine, create_db_and_tables
+from tasks import moderate_post_task
+from metrics import calculate_metrics
 
 app = FastAPI(title="Moderation System Backend")
 

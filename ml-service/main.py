@@ -48,16 +48,6 @@ async def analyze_text(request: TextAnalysisRequest):
         )
         
         result = json.loads(chat_completion.choices[0].message.content)
-        
-        # Apply Threshold Logic Layer
-        score = result.get("toxicity_score", 0.0)
-        if score > 0.7:
-            result["label"] = "toxic"
-        elif score > 0.4:
-            result["label"] = "flagged"
-        else:
-            result["label"] = "safe"
-            
         return result
         
     except Exception as e:

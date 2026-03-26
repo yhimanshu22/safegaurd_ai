@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from .models import Post, Metric, engine
+from models import Post, Metric, engine
 
 def calculate_metrics():
     """
