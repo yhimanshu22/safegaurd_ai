@@ -1,0 +1,41 @@
+name: SafeGuard AI CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Set up Python
+        run: uv python install 3.11
+      - name: Run ML Service Tests
+        run: |
+          cd ml-service
+          uv sync
+          uv run pytest tests/test_main.py
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          uv sync
+          uv run pytest test_backend.py
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-index: 20
+      - name: Run Frontend Tests
+        run: |
+          cd frontend
+          npm install
+          npx vitest run
