@@ -19,7 +19,7 @@ describe('SafeGuard AI Application', () => {
 
     it('renders the activity feed heading', () => {
         render(<App />)
-        expect(screen.getByText(/Activity Feed/i)).toBeInTheDocument()
+        expect(screen.getByText(/Recent Activity/i)).toBeInTheDocument()
     })
 
     it('renders the post creation area', () => {
