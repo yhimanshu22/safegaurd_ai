@@ -38,6 +38,15 @@ We chose **Groq's LPU (Language Processing Unit)** technology to achieve sub-200
 ### ⚠️ Failure Cases & Mitigation
 *   **Sarcasm:** High-context sarcasm may occasionally yield lower confidence scores. **Mitigation:** These are automatically moved to the `FLAGGED` status for manual moderator review.
 *   **New Slang:** The model may lag behind hyper-recent internet slang. **Mitigation:** The system uses a feedback loop where moderator overrides tune the next iteration of the prompt or few-shot examples.
+*   **Complex Misinformation:** Nuanced scientific debates might be mislabeled. **Mitigation:** We prioritize a high `misinformation_score` (threshold > 0.7) to flag suspicious content without immediate deletion.
+
+### 📊 Input/Output Examples (ML Service)
+| Input Content | Expected Label | Conf. Score | Reason |
+| :--- | :--- | :--- | :--- |
+| "You are stupid" | `TOXIC` | 0.92 | Personal insult |
+| "The earth is flat" | `MISINFORMATION` | 0.88 | Conspiracy theory |
+| "This movie is killer" | `SAFE` | 0.10 | Positive slang |
+| [NSFW Image URL] | `TOXIC` | 0.95 | Adult content |
 
 ---
 
@@ -106,7 +115,9 @@ npm run dev
 
 | Endpoint | Method | Payload | Description |
 | :--- | :--- | :--- | :--- |
-| `/posts` | POST | `{content: string}` | Submits content for async moderation. |
+| `/users` | POST | `{username: string}` | Creates a new user. |
+| `/users` | GET | - | Lists all registered users. |
+| `/posts` | POST | `{content: string, user_id?: int}` | Submits content for async moderation. |
 | `/posts` | GET | - | Retrieves a list of all posts and their status. |
 | `/metrics` | GET | - | Retrieves Accuracy, Precision, and Recall data. |
 | `/posts/{id}/moderate` | PATCH | `?correct_label=TOXIC` | Manual override of ML decision. |

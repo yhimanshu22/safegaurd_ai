@@ -1,6 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
+import os
+import sys
+
+# Ensure the parent directory is in the python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from main import app
 
 client = TestClient(app)
@@ -60,3 +66,17 @@ async def test_analyze_image_mock():
         assert response.status_code == 200
         data = response.json()
         assert data["label"] == "safe"
+
+def test_analyze_misinformation():
+    """
+    Test misinformation detection logic.
+    """
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = '{"toxicity_score": 0.1, "misinformation_score": 0.9, "label": "misinformation", "reason": "False health claim"}'
+    
+    with patch("main.client.chat.completions.create", return_value=mock_response):
+        response = client.post("/analyze/text", json={"text": "Magic crystals cure cancer"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["label"] == "misinformation"
+        assert data["misinformation_score"] == 0.9

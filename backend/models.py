@@ -2,12 +2,19 @@ from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Session, create_engine, select
 
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 class Post(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     content: str
     image_url: Optional[str] = None
-    status: str = "PENDING"  # PENDING, SAFE, TOXIC, FLAGGED
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    status: str = "PENDING"  # PENDING, SAFE, TOXIC, FLAGGED, MISINFORMATION
     toxicity_score: float = 0.0
+    misinformation_score: float = 0.0
     reason: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     moderated_at: Optional[datetime] = None

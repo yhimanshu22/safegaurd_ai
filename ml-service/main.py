@@ -26,17 +26,20 @@ async def analyze_text(request: TextAnalysisRequest):
     Includes threshold logic and few-shot prompting for edge cases.
     """
     try:
-        # Few-shot prompting to handle edge cases like "killer" or "stupid"
+        # Few-shot prompting for toxicity, safety, and misinformation
         prompt = f"""
-        Analyze the following text for toxicity and safety. 
+        Analyze the following text for toxicity, safety, and misinformation. 
         Provide a JSON response with:
         - toxicity_score: (0.0 to 1.0)
-        - label: (toxic, safe, flagged)
+        - misinformation_score: (0.0 to 1.0)
+        - label: (toxic, safe, flagged, misinformation)
         - reason: (concise explanation)
         
         Examples:
-        - "This movie is killer": {{"toxicity_score": 0.1, "label": "safe", "reason": "Slang for excellent"}}
-        - "You are a complete idiot": {{"toxicity_score": 0.9, "label": "toxic", "reason": "Direct personal insult"}}
+        - "This movie is killer": {{"toxicity_score": 0.1, "misinformation_score": 0.0, "label": "safe", "reason": "Slang for excellent"}}
+        - "You are a complete idiot": {{"toxicity_score": 0.9, "misinformation_score": 0.0, "label": "toxic", "reason": "Direct personal insult"}}
+        - "The earth is flat and NASA is lying": {{"toxicity_score": 0.1, "misinformation_score": 0.9, "label": "misinformation", "reason": "Conspiracy theory/False statement"}}
+        - "Vaccines cause autism": {{"toxicity_score": 0.0, "misinformation_score": 0.95, "label": "misinformation", "reason": "Medical misinformation"}}
         
         Text to analyze: "{request.text}"
         """

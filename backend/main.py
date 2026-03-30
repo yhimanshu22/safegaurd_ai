@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from datetime import datetime
-from models import Post, Metric, engine, create_db_and_tables
+from models import Post, User, Metric, engine, create_db_and_tables
 from tasks import moderate_post_task
 from metrics import calculate_metrics
 
@@ -21,6 +21,20 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+
+@app.post("/users", response_model=User)
+def create_user(user: User):
+    with Session(engine) as session:
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
+
+@app.get("/users", response_model=List[User])
+def list_users():
+    with Session(engine) as session:
+        users = session.exec(select(User)).all()
+        return users
 
 @app.post("/posts", response_model=Post)
 def create_post(post: Post):

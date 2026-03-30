@@ -65,9 +65,10 @@ def test_manual_moderation_and_metrics():
     """
     Test manual override logic and verify metrics calculation trigger.
     """
-    # Create a post first
-    create_res = client.post("/posts", json={"content": "To be moderated"})
-    post_id = create_res.json()["id"]
+    # Create a post first - mock the task alert to avoid Redis errors
+    with patch("main.moderate_post_task.delay"):
+        create_res = client.post("/posts", json={"content": "To be moderated"})
+        post_id = create_res.json()["id"]
 
     # Manual moderate to SAFE
     response = client.patch(f"/posts/{post_id}/moderate?correct_label=SAFE")
