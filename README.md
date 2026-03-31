@@ -60,14 +60,6 @@ The moderation engine has been verified with:
 
 ---
 
-## 🔒 Data Management & Security
-*   **Database**: All data (Users, Roles, Posts) is persisted in a local **SQLite** file at `backend/database.db`.
-*   **Password Security**: User passwords are never stored in plain text. We use **Bcrypt hashing** (via `passlib`) before persistence.
-*   **Image Processing**: Binary image data is transmitted to the ML service using **Base64 encoding** over secure internal HTTP requests. No images are stored indefinitely on the host filesystem outside of the DB references.
-*   **Session Security**: Authentication is handled via **JWT (JSON Web Tokens)** with a 30-minute expiration for secure session management.
-
----
-
 ## 📡 API Documentation (Latest)
 
 | Endpoint | Method | Payload | Description |
@@ -81,9 +73,38 @@ The moderation engine has been verified with:
 
 ---
 
+## 🤖 AI/ML Strategy: Deep Dive
+We leverage **Groq's LPU (Language Processing Unit)** to provide near-instantaneous moderation results (sub-200ms).
+
+### 📋 Input / Output Examples
+| Input | AI Verdict | Confidence | Reason |
+| :--- | :--- | :--- | :--- |
+| "This community is so helpful!" | `SAFE` | 0.05 | Positive sentiment |
+| "You are an absolute idiot." | `TOXIC` | 0.96 | Direct personal insult |
+| "Check out my profile for free crypto." | `FLAGGED` | 0.75 | Potential spam/scam |
+| [Image of a professional meeting] | `SAFE` | 0.00 | Professional context |
+| [Image with graphic violence] | `TOXIC` | 0.98 | Violent content detected |
+
+### ⚠️ Failure Cases & Mitigation
+AI moderation is not 100% perfect. We've identified and mitigated 3 primary failure cases:
+
+1.  **High-Context Sarcasm**: 
+    - *Example*: "Oh great, another 'amazing' update from the team." 
+    - *Risk*: AI might see "amazing" and label it `SAFE`, missing the mockery.
+    - *Mitigation*: We use a **Moderator Override** system where humans can catch nuanced sarcasm.
+2.  **Boundary Nudity vs. Art**:
+    - *Example*: Classical sculptures or medical diagrams.
+    - *Risk*: AI might flag these as NSFW.
+    - *Mitigation*: These are moved to a **`FLAGGED`** state (instead of `TOXIC`), prompting a human moderator to make the final call.
+3.  **Adversarial Typos**:
+    - *Example*: "H.4.T.E" or "K!LL".
+    - *Risk*: Simple keyword filters fail here.
+    - *Mitigation*: We use **LLM-based analysis** rather than simple word lists. LLMs understand the "intent" even with deliberate typos.
+
+---
+
 ## 📁 Repository Map
-- **`frontend/`**: React + Vite + Tailwind UI.
-- **`backend/`**: FastAPI endpoints + SQLModel.
-- **`ml-service/`**: Groq-powered inference engine.
-- **`run_local.sh`**: The "magic" script for local orchestration.
-nual override of ML decision. |
+- **`frontend/`**: React + Vite + Tailwind UI (`/` and `/dashboard` routes).
+- **`backend/`**: FastAPI + SQLModel + Celery Workers.
+- **`ml-service/`**: Microservice handling Groq API calls.
+- **`run_local.sh`**: One-command local orchestration script.
