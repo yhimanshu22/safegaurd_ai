@@ -18,19 +18,20 @@ interface Post {
   created_at: string;
 }
 
-interface User {
-  id: number;
-  username: string;
-}
+// Removed unused User interface
 
 // Removed unused Metrics interface
 
-export default function Dashboard() {
+interface DashboardProps {
+  token: string | null;
+}
+
+export default function Dashboard({ token }: DashboardProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [viewMode, setViewMode] = useState<'user' | 'moderator'>('user');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,26 +55,12 @@ export default function Dashboard() {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/users`);
-      if (res.data.length === 0) {
-        const defaultUser = await axios.post(`${API_BASE}/users`, { username: "demo_user" });
-        setUsers([defaultUser.data]);
-        setSelectedUser(defaultUser.data.id);
-      } else {
-        setUsers(res.data);
-        setSelectedUser(res.data[0].id);
-      }
-    } catch (e) {
-      console.error("Failed to fetch users", e);
-    }
-  };
+  // Removed legacy fetchUsers
 
   useEffect(() => {
     fetchPosts();
     fetchMetrics();
-    fetchUsers();
+    // Removed legacy fetchUsers - handled by auth now
     const interval = setInterval(() => {
         fetchPosts();
         fetchMetrics();
@@ -94,18 +81,25 @@ export default function Dashboard() {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+        alert("Please login to post content.");
+        return;
+    }
     if (!newPost.trim() && !imageUrl) return;
     setLoading(true);
     try {
       await axios.post(`${API_BASE}/posts`, { 
         content: newPost,
-        image_url: imageUrl || null,
-        user_id: selectedUser
+        image_url: imageUrl || null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setNewPost("");
       setImageUrl("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       fetchPosts();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to create post.");
     } finally {
       setLoading(false);
     }
@@ -113,11 +107,13 @@ export default function Dashboard() {
 
   const handleOverride = async (id: number, decision: string) => {
     try {
-      await axios.patch(`${API_BASE}/posts/${id}/moderate?correct_label=${decision}`);
+      await axios.patch(`${API_BASE}/posts/${id}/moderate?correct_label=${decision}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       fetchPosts();
       fetchMetrics();
-    } catch (e) {
-      console.error("Failed to moderate post", e);
+    } catch (e: any) {
+      alert(e.response?.data?.detail || "Failed to moderate post. Are you a moderator?");
     }
   };
 
@@ -139,18 +135,7 @@ export default function Dashboard() {
             </h3>
             
             <form onSubmit={handleCreatePost} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-1">Target User</label>
-                <select 
-                  value={selectedUser || ""}
-                  onChange={(e) => setSelectedUser(Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-gray-900 focus:ring-2 focus:ring-[#f55064]/20 outline-none transition-all"
-                >
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.username}</option>
-                  ))}
-                </select>
-              </div>
+              {/* User selection removed - automatically set to logged in user */}
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-1">Content</label>

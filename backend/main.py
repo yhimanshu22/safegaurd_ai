@@ -1,11 +1,13 @@
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+from datetime import timedelta
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from datetime import datetime
 from models import Post, User, Metric, engine, create_db_and_tables
 from tasks import moderate_post_task
 from metrics import calculate_metrics
+from auth_utils import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from pydantic import BaseModel
 
 app = FastAPI(title="Moderation System Backend")
 
@@ -18,75 +20,114 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Auth Models
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
 
-@app.post("/users", response_model=User)
-def create_user(user: User):
-    with Session(engine) as session:
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        return user
+@app.post("/register", response_model=User)
+def register(user_data: UserCreate, session: Session = Depends(get_session)):
+    # Check if user exists
+    existing = session.exec(select(User).where(User.username == user_data.username)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    db_user = User(
+        username=user_data.username,
+        email=user_data.email,
+        hashed_password=get_password_hash(user_data.password)
+    )
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
 
-@app.get("/users", response_model=List[User])
-def list_users():
-    with Session(engine) as session:
-        users = session.exec(select(User)).all()
-        return users
+@app.post("/login", response_model=Token)
+def login(login_data: UserLogin, session: Session = Depends(get_session)):
+    user = session.exec(select(User).where(User.username == login_data.username)).first()
+    if not user or not verify_password(login_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/users/me", response_model=User)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
 
 @app.post("/posts", response_model=Post)
-def create_post(post: Post):
+def create_post(post: Post, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     """
     Creates a new post and dispatches a moderation task.
+    Requires authentication.
     """
-    with Session(engine) as session:
-        session.add(post)
-        session.commit()
-        session.refresh(post)
-        
-        # Async moderation task
-        moderate_post_task.delay(post.id)
-        return post
+    post.user_id = current_user.id
+    session.add(post)
+    session.commit()
+    session.refresh(post)
+    
+    # Async moderation task
+    moderate_post_task.delay(post.id)
+    return post
 
 @app.get("/posts", response_model=List[Post])
-def list_posts(status: Optional[str] = None):
-    with Session(engine) as session:
-        statement = select(Post)
-        if status:
-            statement = statement.where(Post.status == status)
-        posts = session.exec(statement).all()
-        return posts
+def list_posts(status: Optional[str] = None, session: Session = Depends(get_session)):
+    statement = select(Post)
+    if status:
+        statement = statement.where(Post.status == status)
+    posts = session.exec(statement).all()
+    return posts
 
 @app.patch("/posts/{post_id}/moderate")
-def update_post_manual(post_id: int, correct_label: str):
+def update_post_manual(post_id: int, correct_label: str, session: Session = Depends(get_session)):
     """
     Manual override by moderator. Updates the status and triggers metric calculation.
     """
-    with Session(engine) as session:
-        post = session.get(Post, post_id)
-        if not post:
-            raise HTTPException(status_code=404, detail="Post not found")
-            
-        post.correct_label = correct_label.upper()
-        post.status = post.correct_label
-        post.manual_override = True
+    post = session.get(Post, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
         
-        session.add(post)
-        session.commit()
-        
-        # Re-calculate metrics
-        calculate_metrics()
-        
-        return {"id": post_id, "status": post.status, "manual_override": True}
+    post.correct_label = correct_label.upper()
+    post.status = post.correct_label
+    post.manual_override = True
+    
+    session.add(post)
+    session.commit()
+    
+    # Re-calculate metrics
+    calculate_metrics()
+    
+    return {"id": post_id, "status": post.status, "manual_override": True}
 
 @app.get("/metrics", response_model=Optional[Metric])
-def get_latest_metrics():
-    with Session(engine) as session:
-        statement = select(Metric).order_by(Metric.updated_at.desc()).limit(1)
-        metric = session.exec(statement).first()
-        return metric
+def get_latest_metrics(session: Session = Depends(get_session)):
+    statement = select(Metric).order_by(Metric.updated_at.desc()).limit(1)
+    metric = session.exec(statement).first()
+    return metric
 
 if __name__ == "__main__":
     import uvicorn

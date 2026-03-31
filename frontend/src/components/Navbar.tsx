@@ -1,14 +1,22 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, User as UserIcon, LogOut } from 'lucide-react';
 
-export default function Navbar() {
+interface NavbarProps {
+  isAuthenticated: boolean;
+  username: string | null;
+  onLoginClick: () => void;
+  onSignupClick: () => void;
+  onLogout: () => void;
+}
+
+export default function Navbar({ isAuthenticated, username, onLoginClick, onSignupClick, onLogout }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 glass border-b border-gray-100 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
+        <a href="/" className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
           <Shield className="w-8 h-8 text-[#f55064]" />
           <span className="text-xl font-bold tracking-tight text-gray-900">SafeGuard AI</span>
-        </div>
+        </a>
         
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Features</a>
@@ -17,8 +25,36 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-4 py-2">Log in</button>
-          <button className="btn-primary text-sm px-5 py-2.5">Start for Free</button>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">
+                <UserIcon className="w-4 h-4 text-[#f55064]" />
+                <span className="text-sm font-bold text-gray-700">{username}</span>
+              </div>
+              <button 
+                onClick={onLogout}
+                className="p-2.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-[#f55064] transition-all"
+                title="Log out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={onLoginClick}
+                className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-4 py-2"
+              >
+                Log in
+              </button>
+              <button 
+                onClick={onSignupClick}
+                className="btn-primary text-sm px-5 py-2.5"
+              >
+                Start for Free
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Zap, ShieldCheck, Globe } from 'lucide-react';
 
-export default function Hero() {
+export default function Hero({ onStartClick }: { onStartClick?: () => void }) {
   return (
     <div className="relative pt-20 pb-16 px-6 overflow-hidden">
       {/* Background Decorative Elements */}
@@ -23,7 +23,10 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <button className="btn-primary text-lg px-8 py-4 w-full sm:w-auto flex items-center justify-center gap-2">
+          <button 
+            onClick={onStartClick}
+            className="btn-primary text-lg px-8 py-4 w-full sm:w-auto flex items-center justify-center gap-2"
+          >
             Start Protecting Now
             <ArrowRight className="w-5 h-5" />
           </button>
