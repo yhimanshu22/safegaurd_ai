@@ -13,11 +13,14 @@ app = FastAPI(title="Content Moderation ML Service")
 # Initialize Groq client
 client = Groq(api_key=os.getenv("GROQ_API_KEY", "your_api_key_here"))
 
+
 class TextAnalysisRequest(BaseModel):
     text: str
 
+
 class ImageAnalysisRequest(BaseModel):
     image_url: str
+
 
 @app.post("/analyze/text")
 async def analyze_text(request: TextAnalysisRequest):
@@ -47,14 +50,15 @@ async def analyze_text(request: TextAnalysisRequest):
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
-        
+
         result = json.loads(chat_completion.choices[0].message.content)
         return result
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/analyze/image")
 async def analyze_image(request: ImageAnalysisRequest):
@@ -63,30 +67,29 @@ async def analyze_image(request: ImageAnalysisRequest):
     """
     try:
         prompt = "Analyze this image for NSFW content, violence, or sensitive material. Return a JSON with nsfw_score (0-1), label, and reason."
-        
+
         chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": request.image_url}
-                        }
-                    ]
+                        {"type": "image_url", "image_url": {"url": request.image_url}},
+                    ],
                 }
             ],
-            model="llama-3.2-11b-vision-preview",
-            response_format={"type": "json_object"}
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            response_format={"type": "json_object"},
         )
-        
+
         result = json.loads(chat_completion.choices[0].message.content)
         return result
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

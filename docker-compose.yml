@@ -8,6 +8,8 @@ services:
     build: ./ml-service
     ports:
       - "8001:8001"
+    volumes:
+      - ./ml-service:/app
     environment:
       - GROQ_API_KEY=${GROQ_API_KEY}
 
@@ -18,15 +20,19 @@ services:
     depends_on:
       - redis
       - ml-service
+    volumes:
+      - ./backend:/app
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-      - ML_SERVICE_URL=http://ml-service:8001
+      - ML_SERVICE_URL=http://ml-service:8001/analyze/text
 
   worker:
     build: ./backend
     command: uv run celery -A tasks worker --loglevel=info
     depends_on:
       - redis
+    volumes:
+      - ./backend:/app
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-      - ML_SERVICE_URL=http://ml-service:8001
+      - ML_SERVICE_URL=http://ml-service:8001/analyze/text

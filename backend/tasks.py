@@ -11,6 +11,10 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
 celery_app = Celery("tasks", broker=CELERY_BROKER_URL)
 
 ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "http://localhost:8001/analyze/text")
+if not ML_SERVICE_URL.endswith("/analyze/text"):
+    # Ensure it at least ends with the base if given as a root
+    if ML_SERVICE_URL.endswith(":8001") or ML_SERVICE_URL.endswith(":8001/"):
+        ML_SERVICE_URL = ML_SERVICE_URL.rstrip("/") + "/analyze/text"
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=5)
