@@ -20,11 +20,11 @@ graph TD
 
 ---
 
-## 👥 Team Roles & Contributions (IITK Cluster)
-*   **System Architect**: Designed the asynchronous microservice patterns (Celery + Redis) and service decoupling.
-*   **ML/AI Engineer**: Lead the Groq API integration (LPU optimization), threshold logic, and NSFW image detection strategy.
-*   **Backend Developer**: Developed the FastAPI security layer (JWT + Bcrypt) and SQLModel data persistence.
-*   **Frontend Developer**: Crafted the premium "glassmorphic" UI/UX and role-based dashboard visualization.
+## 👤 Solo Developer & Contributions (IITK Cluster)
+*   **Full-Stack Engineering**: Architected and implemented the entire system end-to-end, from the "glassmorphic" React UI to the FastAPI business logic.
+*   **AI/ML Integration**: Lead the design of the Groq-powered moderation microservice, including threshold logic for text and NSFW image detection.
+*   **Systems Design**: Configured the asynchronous worker pipeline (Celery + Redis) and ensured cross-platform stability (Windows/Linux/Docker).
+*   **Data Architecture**: Designed the relational schema (SQLModel) and implemented secure data persistence (Bcrypt + JWT).
 
 ---
 
