@@ -282,10 +282,10 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
           <div className="flex justify-between items-start mb-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="font-bold text-gray-900 text-sm hover:underline cursor-pointer">
-                {post.username}
+                {post.username || `User ${post.id}`}
               </span>
               <span className="text-gray-400 text-xs">
-                @{post.username.toLowerCase().replace(/\s+/g, '')}
+                @{(post.username || 'user').toLowerCase().replace(/\s+/g, '')}
               </span>
               <span className="text-gray-300 text-xs">•</span>
               <span className="text-gray-400 text-xs">
@@ -305,9 +305,14 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
           </div>
           
           {/* Content */}
-          <p className="text-sm text-gray-800 leading-normal mb-4 break-words">
-            {highlightContent(post.content, isToxic)}
-          </p>
+          {(() => {
+            const cleanContent = post.content?.replace(/^Kaggle Dataset Image:.*?\.(jpg|png|jpeg)\s*/gi, "").trim();
+            return cleanContent ? (
+              <p className="text-sm text-gray-800 leading-normal mb-4 break-words">
+                {highlightContent(cleanContent, isToxic)}
+              </p>
+            ) : null;
+          })()}
 
           {/* Image */}
           {post.image_url && (

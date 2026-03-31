@@ -149,10 +149,13 @@ def list_posts(status: Optional[str] = None, session: Session = Depends(get_sess
     
     # Map (Post, username) tuple to PostRead
     posts_read = []
-    for post, username in results:
-        post_data = post.model_dump()
-        post_data["username"] = username
-        posts_read.append(PostRead(**post_data))
+    for row in results:
+        # SQLModel select(Post, User.username) returns a tuple (Post, username)
+        post, username = row
+        post_dict = post.model_dump()
+        # Fallback for identity mapping if user was deleted or ID shifted
+        post_dict["username"] = username or f"User {post.user_id}"
+        posts_read.append(PostRead(**post_dict))
         
     return posts_read
 
