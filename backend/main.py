@@ -14,8 +14,11 @@ from auth_utils import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+import kagglehub
+import os
 
-app = FastAPI(title="Moderation System Backend")
+app = FastAPI(title="SafeGuard AI Backend v2")
 
 # Enable CORS for React frontend
 app.add_middleware(
@@ -25,6 +28,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve Kaggle Dataset Images
+try:
+    KAGGE_PATH = kagglehub.dataset_download("gdk4539/image-classification-to-detect-nsfw")
+    app.mount("/kaggle-images", StaticFiles(directory=KAGGE_PATH), name="kaggle-images")
+    print(f"✅ Serving Kaggle images from {KAGGE_PATH}")
+except Exception as e:
+    print(f"⚠️ Failed to mount Kaggle images: {e}")
 
 
 # Auth Models
@@ -161,4 +172,4 @@ def get_latest_metrics(session: Session = Depends(get_session)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

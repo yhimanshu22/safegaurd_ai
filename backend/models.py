@@ -31,8 +31,9 @@ class Metric(SQLModel, table=True):
     total_samples: int = 0
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+import os
 sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = os.getenv("DATABASE_URL", f"sqlite:///{sqlite_file_name}")
 
 engine = create_engine(sqlite_url, echo=False)
 

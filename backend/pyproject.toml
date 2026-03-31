@@ -17,6 +17,8 @@ dependencies = [
     "redis>=7.4.0",
     "sqlmodel>=0.0.37",
     "uvicorn>=0.42.0",
+    "kagglehub>=0.3.3",
+    "pillow>=10.4.0",
 ]
 
 [dependency-groups]

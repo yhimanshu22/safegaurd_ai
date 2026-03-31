@@ -66,7 +66,13 @@ async def analyze_image(request: ImageAnalysisRequest):
     Analyzes images for NSFW content using Groq's Vision models.
     """
     try:
-        prompt = "Analyze this image for NSFW content, violence, or sensitive material. Return a JSON with nsfw_score (0-1), label, and reason."
+        prompt = """
+        Analyze this image for NSFW content, violence, or sensitive material. 
+        Return a JSON with:
+        - nsfw_score: (0.0 to 1.0)
+        - label: (SAFE, FLAGGED, or TOXIC)
+        - reason: (concise explanation)
+        """
 
         chat_completion = client.chat.completions.create(
             messages=[
@@ -92,4 +98,4 @@ async def analyze_image(request: ImageAnalysisRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
