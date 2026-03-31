@@ -1,7 +1,7 @@
 # Personal Contribution Summary: SafeGuard AI
 
-**Name**: [Your Name]
-**Role**: Solo Full-Stack AI/ML Developer (100% Ownership)
+**Name**: Himanshu Yadav
+**Role**: Full-Stack AI/ML Developer (100% Ownership)
 
 ## 🚀 What I Built
 - **End-to-End AI Integration**: Architected the connection between the FastAPI backend and the Groq-powered ML microservice, enabling sub-200ms text and image moderation.
