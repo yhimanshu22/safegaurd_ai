@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from models import Post, User, Metric, PostRead, engine, create_db_and_tables
+from models import Post, User, Metric, PostRead, engine, create_db_and_tables, get_session
 from tasks import moderate_post_task
 from metrics import calculate_metrics
 from auth_utils import (
@@ -55,11 +55,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     role: str
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 @app.on_event("startup")
