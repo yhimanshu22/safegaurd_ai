@@ -58,8 +58,9 @@ def import_data():
             return
 
         # 3. Find images
-        images = list(dataset_path.glob("*.jpg")) + list(dataset_path.glob("*.png")) + list(dataset_path.glob("*.jpeg"))
-        print(f"Found {len(images)} images.")
+        images = list(dataset_path.glob("**/*.jpg")) + list(dataset_path.glob("**/*.png")) + list(dataset_path.glob("**/*.jpeg"))
+        print(f"Found {len(images)} images. Limiting to 50...")
+        images = images[:50]
 
         # 4. Process and Insert
         with httpx.Client(timeout=30.0) as client:
