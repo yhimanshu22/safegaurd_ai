@@ -14,24 +14,24 @@ export default function Hero({ onStartClick }: { onStartClick?: () => void }) {
         </div>
         
         <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-6 leading-[1.1]">
-          Moderation at the <br />
-          <span className="text-[#f55064]">Speed of Light.</span>
+          Modern Moderation for <br />
+          <span className="text-[#f55064]">Modern Communities.</span>
         </h1>
         
         <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          The world's fastest content moderation engine. Secure your community with sub-200ms inference times and 99.9% accuracy.
+          The ultimate content moderation engine. Secure your platform with sub-200ms AI inference, multi-modal safety, and a dashboard that feels like magic.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
           <button 
             onClick={onStartClick}
-            className="btn-primary text-lg px-8 py-4 w-full sm:w-auto flex items-center justify-center gap-2"
+            className="btn-primary text-lg px-10 py-4 w-full sm:w-auto flex items-center justify-center gap-2 shadow-xl shadow-red-200"
           >
-            Start Protecting Now
+            Get Started Now
             <ArrowRight className="w-5 h-5" />
           </button>
-          <button className="px-8 py-4 text-lg font-semibold text-gray-700 hover:text-gray-900 transition-colors w-full sm:w-auto">
-            Book a Demo
+          <button className="px-10 py-4 text-lg font-semibold text-gray-700 hover:text-gray-900 transition-all hover:bg-gray-50 rounded-2xl w-full sm:w-auto">
+            View Live Demo
           </button>
         </div>
 
