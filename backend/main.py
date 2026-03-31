@@ -43,6 +43,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     email: Optional[str] = None
+    role: str = "user"  # "user" or "moderator"
 
 
 class UserLogin(BaseModel):
@@ -53,6 +54,7 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    role: str
 
 
 def get_session():
@@ -78,6 +80,7 @@ def register(user_data: UserCreate, session: Session = Depends(get_session)):
         username=user_data.username,
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
+        role=user_data.role
     )
     session.add(db_user)
     session.commit()
@@ -101,7 +104,11 @@ def login(login_data: UserLogin, session: Session = Depends(get_session)):
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": user.role
+    }
 
 
 @app.get("/users/me", response_model=User)
@@ -140,11 +147,18 @@ def list_posts(status: Optional[str] = None, session: Session = Depends(get_sess
 
 @app.patch("/posts/{post_id}/moderate")
 def update_post_manual(
-    post_id: int, correct_label: str, session: Session = Depends(get_session)
+    post_id: int,
+    correct_label: str,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Manual override by moderator. Updates the status and triggers metric calculation.
     """
+    if current_user.role != "moderator":
+        raise HTTPException(
+            status_code=403, detail="Only moderators can perform this action"
+        )
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")

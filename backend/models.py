@@ -7,6 +7,7 @@ class User(SQLModel, table=True):
     username: str = Field(index=True, unique=True)
     email: Optional[str] = Field(default=None, index=True)
     hashed_password: str
+    role: str = Field(default="user")  # "user" or "moderator"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Post(SQLModel, table=True):

@@ -7,7 +7,7 @@ const API_BASE = "http://localhost:8000";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (token: string, username: string) => void;
+  onSuccess: (token: string, username: string, role: string) => void;
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
@@ -15,6 +15,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,13 +29,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     try {
       if (isLogin) {
         const res = await axios.post(`${API_BASE}/login`, { username, password });
-        onSuccess(res.data.access_token, username);
+        onSuccess(res.data.access_token, username, res.data.role);
         onClose();
       } else {
-        await axios.post(`${API_BASE}/register`, { username, password, email });
+        await axios.post(`${API_BASE}/register`, { username, password, email, role });
         // After signup, automatically login
         const loginRes = await axios.post(`${API_BASE}/login`, { username, password });
-        onSuccess(loginRes.data.access_token, username);
+        onSuccess(loginRes.data.access_token, username, loginRes.data.role);
         onClose();
       }
     } catch (err: any) {
@@ -102,7 +103,33 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#f55064]/20 outline-none transition-all placeholder:text-gray-400 text-gray-900"
                 />
               </div>
-            </div>
+            {!isLogin && (
+              <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setRole("user")}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                    role === "user" 
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-100" 
+                    : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  I'm a User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("moderator")}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                    role === "moderator" 
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-100" 
+                    : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  Moderator
+                </button>
+              </div>
+            )}
+          </div>
 
             {error && (
               <p className="text-red-500 text-sm font-bold text-center bg-red-50 py-2 rounded-xl border border-red-100">

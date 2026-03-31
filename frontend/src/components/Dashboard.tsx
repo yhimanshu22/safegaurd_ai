@@ -24,15 +24,14 @@ interface Post {
 
 interface DashboardProps {
   token: string | null;
+  userRole: string | null;
 }
 
-export default function Dashboard({ token }: DashboardProps) {
+export default function Dashboard({ token, userRole }: DashboardProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [viewMode, setViewMode] = useState<'user' | 'moderator'>('user');
-  const [users, setUsers] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'user' | 'moderator'>(userRole === 'moderator' ? 'moderator' : 'user');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,9 +57,12 @@ export default function Dashboard({ token }: DashboardProps) {
   // Removed legacy fetchUsers
 
   useEffect(() => {
+    setViewMode(userRole === 'moderator' ? 'moderator' : 'user');
+  }, [userRole]);
+
+  useEffect(() => {
     fetchPosts();
     fetchMetrics();
-    // Removed legacy fetchUsers - handled by auth now
     const interval = setInterval(() => {
         fetchPosts();
         fetchMetrics();
@@ -202,25 +204,27 @@ export default function Dashboard({ token }: DashboardProps) {
         </div>
 
         <div className="lg:w-2/3 space-y-8">
-          <div className="flex justify-between items-center bg-gray-50 p-2 rounded-2xl border border-gray-100">
-            <div className="flex p-1">
-              <button 
-                onClick={() => setViewMode('user')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'user' ? 'bg-white text-[#f55064] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <UserIcon className="w-4 h-4" /> User Feed
-              </button>
-              <button 
-                onClick={() => setViewMode('moderator')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'moderator' ? 'bg-white text-[#f55064] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <LayoutDashboard className="w-4 h-4" /> Moderator
+          {userRole === 'moderator' && (
+            <div className="flex justify-between items-center bg-gray-50 p-2 rounded-2xl border border-gray-100">
+              <div className="flex p-1">
+                <button 
+                  onClick={() => setViewMode('user')}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'user' ? 'bg-white text-[#f55064] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <UserIcon className="w-4 h-4" /> User Feed
+                </button>
+                <button 
+                  onClick={() => setViewMode('moderator')}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'moderator' ? 'bg-white text-[#f55064] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  <LayoutDashboard className="w-4 h-4" /> Moderator
+                </button>
+              </div>
+              <button onClick={fetchPosts} className="mr-4 p-3 hover:bg-white rounded-xl transition-all text-gray-400">
+                <RotateCcw className="w-5 h-5" />
               </button>
             </div>
-            <button onClick={fetchPosts} className="mr-4 p-3 hover:bg-white rounded-xl transition-all text-gray-400">
-              <RotateCcw className="w-5 h-5" />
-            </button>
-          </div>
+          )}
 
           <div className="space-y-6">
             {filteredPosts.length === 0 ? (
@@ -304,41 +308,43 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
             </div>
           )}
 
-          <div className="mt-auto flex items-center gap-6 pt-6 border-t border-gray-50">
-            <div className="flex-1">
-              <div className="flex justify-between mb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Risk Confidence</span>
-                <span className={`text-[10px] font-black ${isToxic ? 'text-red-500' : 'text-gray-900'}`}>{score.toFixed(1)}%</span>
+          {(isModView || score > 80) && (
+            <div className="mt-auto flex items-center gap-6 pt-6 border-t border-gray-50">
+              <div className="flex-1">
+                <div className="flex justify-between mb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Risk Confidence</span>
+                  <span className={`text-[10px] font-black ${isToxic ? 'text-red-500' : 'text-gray-900'}`}>{score.toFixed(1)}%</span>
+                </div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-1000 ${
+                      isToxic ? 'bg-[#f55064]' : 
+                      isMisinfo ? 'bg-purple-500' :
+                      'bg-emerald-500'
+                    }`}
+                    style={{ width: `${score}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-1000 ${
-                    isToxic ? 'bg-[#f55064]' : 
-                    isMisinfo ? 'bg-purple-500' :
-                    'bg-emerald-500'
-                  }`}
-                  style={{ width: `${score}%` }}
-                />
-              </div>
+              
+              {isModView && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => onOverride(post.id, 'SAFE')}
+                    className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                  >
+                    <CheckCircle className="w-6 h-6" />
+                  </button>
+                  <button 
+                    onClick={() => onOverride(post.id, 'TOXIC')}
+                    className="p-3 rounded-2xl bg-red-50 text-red-600 hover:bg-[#f55064] hover:text-white transition-all shadow-sm"
+                  >
+                    <AlertTriangle className="w-6 h-6" />
+                  </button>
+                </div>
+              )}
             </div>
-            
-            {isModView && (
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => onOverride(post.id, 'SAFE')}
-                  className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-                >
-                  <CheckCircle className="w-6 h-6" />
-                </button>
-                <button 
-                  onClick={() => onOverride(post.id, 'TOXIC')}
-                  className="p-3 rounded-2xl bg-red-50 text-red-600 hover:bg-[#f55064] hover:text-white transition-all shadow-sm"
-                >
-                  <AlertTriangle className="w-6 h-6" />
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

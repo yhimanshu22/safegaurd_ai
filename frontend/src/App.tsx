@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -21,20 +21,29 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [username, setUsername] = useState<string | null>(localStorage.getItem('username'));
+  const [userRole, setUserRole] = useState<string | null>(localStorage.getItem('userRole'));
 
-  const handleAuthSuccess = (newToken: string, newUsername: string) => {
+  const handleAuthSuccess = (newToken: string, newUsername: string, newRole: string) => {
     setToken(newToken);
     setUsername(newUsername);
+    setUserRole(newRole);
     localStorage.setItem('token', newToken);
     localStorage.setItem('username', newUsername);
+    localStorage.setItem('userRole', newRole);
     setShowAuthModal(false);
+    // Smooth scroll to the app section after login
+    setTimeout(() => {
+      document.getElementById('app-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleLogout = () => {
     setToken(null);
     setUsername(null);
+    setUserRole(null);
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    localStorage.removeItem('userRole');
   };
 
   const fetchMetrics = async () => {
@@ -70,11 +79,17 @@ export default function App() {
 
       <main>
         <Hero onStartClick={() => token ? document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }) : setShowAuthModal(true)} />
-        <BentoGrid metrics={metrics} />
-        <div className="py-24 bg-white">
+        {userRole === 'moderator' && <BentoGrid metrics={metrics} />}
+        <div id="app-section" className="py-24 bg-white">
             <div className="max-w-7xl mx-auto px-6 text-center mb-12">
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">Try the Live Demo</h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">Experience our sub-200ms moderation in real-time. Post content and see how our AI labels it instantly.</p>
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                  {userRole === 'moderator' ? 'Moderator Dashboard' : 'Community Feed'}
+                </h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  {userRole === 'moderator' 
+                    ? 'Manage pending content and view platform metrics in real-time.' 
+                    : 'See what others are sharing and contribute to the community.'}
+                </p>
                 {!token && (
                   <button 
                     onClick={() => setShowAuthModal(true)}
@@ -84,7 +99,7 @@ export default function App() {
                   </button>
                 )}
             </div>
-            <Dashboard token={token} />
+            <Dashboard token={token} userRole={userRole} />
         </div>
       </main>
       <Footer />
