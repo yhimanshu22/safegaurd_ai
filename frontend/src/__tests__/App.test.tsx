@@ -18,17 +18,12 @@ describe('SafeGuard AI Application', () => {
 
     it('renders the hero headline', () => {
         render(<App />)
-        expect(screen.getByText(/Moderation at the/i)).toBeInTheDocument()
-        expect(screen.getByText(/Speed of Light/i)).toBeInTheDocument()
+        expect(screen.getByText(/Modern Moderation/i)).toBeInTheDocument()
+        expect(screen.getByText(/Modern Communities/i)).toBeInTheDocument()
     })
 
-    it('renders the demo section', () => {
+    it('renders the demo button', () => {
         render(<App />)
-        expect(screen.getByText(/Try the Live Demo/i)).toBeInTheDocument()
-    })
-
-    it('renders the post creation placeholder', () => {
-        render(<App />)
-        expect(screen.getByPlaceholderText(/What's on your mind?/i)).toBeInTheDocument()
+        expect(screen.getByText(/View Live Demo/i)).toBeInTheDocument()
     })
 })

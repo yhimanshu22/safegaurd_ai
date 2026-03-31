@@ -11,7 +11,6 @@ vi.mock('axios', () => ({
   }
 }));
 
-import axios from 'axios';
 const mockedAxios = axios as any;
 
 describe('AuthModal Component', () => {
@@ -38,7 +37,12 @@ describe('AuthModal Component', () => {
   });
 
   it('handles successful login', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { access_token: 'fake-token' } });
+    mockedAxios.post.mockResolvedValueOnce({ 
+      data: { 
+        access_token: 'fake-token',
+        role: 'user'
+      } 
+    });
     
     render(<AuthModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
     
@@ -51,7 +55,7 @@ describe('AuthModal Component', () => {
         username: 'testuser',
         password: 'password123',
       });
-      expect(mockOnSuccess).toHaveBeenCalledWith('fake-token', 'testuser');
+      expect(mockOnSuccess).toHaveBeenCalledWith('fake-token', 'testuser', 'user');
       expect(mockOnClose).toHaveBeenCalled();
     });
   });
