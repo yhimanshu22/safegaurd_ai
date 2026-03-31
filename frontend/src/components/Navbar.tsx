@@ -1,5 +1,6 @@
 import React from 'react';
-import { Shield, User as UserIcon, LogOut } from 'lucide-react';
+import { Shield, User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface NavbarProps {
   isAuthenticated: boolean;
@@ -13,15 +14,21 @@ export default function Navbar({ isAuthenticated, username, onLoginClick, onSign
   return (
     <nav className="sticky top-0 z-50 glass border-b border-gray-100 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <a href="/" className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
+        <Link to="/" className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
           <Shield className="w-8 h-8 text-[#f55064]" />
           <span className="text-xl font-bold tracking-tight text-gray-900">SafeGuard AI</span>
-        </a>
+        </Link>
         
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Features</a>
-          <a href="#metrics" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Metrics</a>
-          <a href="#demo" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Live Demo</a>
+          <Link to="/" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Home</Link>
+          <a href="/#features" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Features</a>
+          <a href="/#metrics" className="text-sm font-medium text-gray-600 hover:text-[#f55064] transition-colors">Metrics</a>
+          {isAuthenticated && (
+            <Link to="/dashboard" className="text-sm font-bold text-gray-900 flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white transition-all">
+              <LayoutDashboard className="w-4 h-4 text-[#f55064]" />
+              Dashboard
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
