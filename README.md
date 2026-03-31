@@ -20,6 +20,24 @@ graph TD
 
 ---
 
+## 👥 Team Roles & Contributions (IITK Cluster)
+*   **System Architect**: Designed the asynchronous microservice patterns (Celery + Redis) and service decoupling.
+*   **ML/AI Engineer**: Lead the Groq API integration (LPU optimization), threshold logic, and NSFW image detection strategy.
+*   **Backend Developer**: Developed the FastAPI security layer (JWT + Bcrypt) and SQLModel data persistence.
+*   **Frontend Developer**: Crafted the premium "glassmorphic" UI/UX and role-based dashboard visualization.
+
+---
+
+## 🏛️ Architecture Decision Records (ADR)
+| Decision | Choice | Rationale |
+| :--- | :--- | :--- |
+| **Worker Pattern** | Celery Event Loop | Provides non-blocking moderation, essential for maintaining sub-second response times for the user. |
+| **Persistence** | SQLite (SQLModel) | Optimized for portability and rapid iteration while maintaining strict relational integrity. |
+| **Auth Strategy** | JWT + RBAC | Ensures secure, stateless session management with fine-grained access control for Moderators. |
+| **Visual Style** | Bento Grid + Tailwind | Delivers a data-dense yet intuitive layout for complex moderation metrics. |
+
+---
+
 ## 🔑 Key Features
 *   **Role-Based Access Control (RBAC)**: Distinct paths for `Moderator` (Full analytics & overrides) and `User` (Community feed only).
 *   **Modern Routing**: Separated Landing Page (`/`) and Application (`/dashboard`) using `react-router-dom`.
