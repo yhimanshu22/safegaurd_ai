@@ -14,12 +14,15 @@ class Post(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     content: str
     image_url: Optional[str] = None
-    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    status: str = "PENDING"  # PENDING, SAFE, TOXIC, FLAGGED, MISINFORMATION
+    user_id: int
+    status: str = "PENDING"
     toxicity_score: float = 0.0
-    misinformation_score: float = 0.0
     reason: Optional[str] = None
+    manual_label: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PostRead(Post):
+    username: Optional[str] = None
     moderated_at: Optional[datetime] = None
     manual_override: bool = False
     correct_label: Optional[str] = None  # For metrics (True label from moderator)

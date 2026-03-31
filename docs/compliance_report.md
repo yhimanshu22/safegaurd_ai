@@ -13,6 +13,7 @@ This report verifies that the implemented platform meets all requirements specif
 | **User: View Approved Posts** | ✅ | Frontend strictly filters for `SAFE` posts in the User view. |
 | **Moderator: Dashboard** | ✅ | Dedicated view showing all posts, confidence scores, and flag reasons. |
 | **Moderator: Approve/Reject** | ✅ | Manual labels (`manual_label`) override AI decisions via PATCH API. |
+| **Hybrid Waterfall Logic** | ✅ | Implemented a 'Fast Pass' layer for 0-latency moderation of obvious cases. |
 | **Backend: Async Queue** | ✅ | Celery + Redis decouples moderation latency from post creation. |
 | **Database: Users & Posts** | ✅ | SQLModel (SQLite) with fields for `role`, `status`, and `reason`. |
 

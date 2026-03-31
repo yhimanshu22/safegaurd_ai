@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from models import Post, User, Metric, engine, create_db_and_tables
+from models import Post, User, Metric, PostRead, engine, create_db_and_tables
 from tasks import moderate_post_task
 from metrics import calculate_metrics
 from auth_utils import (
@@ -136,13 +136,25 @@ def create_post(
     return post
 
 
-@app.get("/posts", response_model=List[Post])
+@app.get("/posts", response_model=List[PostRead])
 def list_posts(status: Optional[str] = None, session: Session = Depends(get_session)):
-    statement = select(Post)
+    """
+    Lists all posts. Join with User to get usernames.
+    """
+    statement = select(Post, User.username).join(User, Post.user_id == User.id).order_by(Post.created_at.desc())
     if status:
         statement = statement.where(Post.status == status)
-    posts = session.exec(statement).all()
-    return posts
+    
+    results = session.exec(statement).all()
+    
+    # Map (Post, username) tuple to PostRead
+    posts_read = []
+    for post, username in results:
+        post_data = post.model_dump()
+        post_data["username"] = username
+        posts_read.append(PostRead(**post_data))
+        
+    return posts_read
 
 
 @app.patch("/posts/{post_id}/moderate")

@@ -16,11 +16,26 @@ interface Post {
   toxicity_score: number;
   reason?: string;
   created_at: string;
+  username: string; // Required now
 }
 
-// Removed unused User interface
+// Relative time helper
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-// Removed unused Metrics interface
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  });
+}
 
 interface DashboardProps {
   token: string | null;
@@ -29,6 +44,7 @@ interface DashboardProps {
 
 export default function Dashboard({ token, userRole }: DashboardProps) {
   const [posts, setPosts] = useState<Post[]>([]);
+  // ... (rest of the component state and effects)
   const [newPost, setNewPost] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [viewMode, setViewMode] = useState<'user' | 'moderator'>(userRole === 'moderator' ? 'moderator' : 'user');
@@ -38,7 +54,7 @@ export default function Dashboard({ token, userRole }: DashboardProps) {
   const fetchPosts = async () => {
     try {
       const res = await axios.get(`${API_BASE}/posts`);
-      setPosts(res.data.reverse());
+      setPosts(res.data); // data is already reversed by backend or by state? actually backend returns sorted.
     } catch (e) {
       console.error("Failed to fetch posts", e);
     }
@@ -46,15 +62,11 @@ export default function Dashboard({ token, userRole }: DashboardProps) {
 
   const fetchMetrics = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/metrics`);
-      // Keeping fetch for potential local dashboard needs, but removing the setMetrics call 
-      // if we removed the state. Wait, better to keep the state for now to avoid more errors.
+      await axios.get(`${API_BASE}/metrics`);
     } catch (e) {
       console.error("Failed to fetch metrics", e);
     }
   };
-
-  // Removed legacy fetchUsers
 
   useEffect(() => {
     setViewMode(userRole === 'moderator' ? 'moderator' : 'user');
@@ -113,9 +125,8 @@ export default function Dashboard({ token, userRole }: DashboardProps) {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchPosts();
-      fetchMetrics();
     } catch (e: any) {
-      alert(e.response?.data?.detail || "Failed to moderate post. Are you a moderator?");
+      alert(e.response?.data?.detail || "Failed to moderate post.");
     }
   };
 
@@ -137,8 +148,6 @@ export default function Dashboard({ token, userRole }: DashboardProps) {
             </h3>
             
             <form onSubmit={handleCreatePost} className="space-y-6">
-              {/* User selection removed - automatically set to logged in user */}
-
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-1">Content</label>
                 <textarea
@@ -254,36 +263,37 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
   const isFlagged = post.status === "FLAGGED";
   const isPending = post.status === "PENDING";
   const isMisinfo = post.status === "MISINFORMATION";
-  const score = Math.max(post.toxicity_score, (post as any).misinformation_score || 0) * 100;
+  const score = Math.max(post.toxicity_score || 0, (post as any).misinformation_score || 0) * 100;
 
   return (
-    <div className={`group glass rounded-[32px] p-8 border-none shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden relative ${
+    <div className={`group glass rounded-[24px] p-6 border-none shadow-sm hover:shadow-lg transition-all duration-300 relative ${
       isToxic ? 'border-l-4 border-l-[#f55064]' : 
       isMisinfo ? 'border-l-4 border-l-purple-500' :
       'border-l-4 border-l-emerald-500'
     }`}>
-      <div className="flex flex-col md:flex-row gap-8">
-        {post.image_url && (
-          <div className="w-full md:w-56 h-56 rounded-2xl overflow-hidden bg-gray-50 shrink-0 relative">
-            <img 
-              src={post.image_url} 
-              alt="Post" 
-              className={`w-full h-full object-cover transition-all ${isToxic && !isModView ? 'blur-3xl' : ''}`} 
-            />
-            {isToxic && !isModView && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-md">
-                <EyeOff className="w-8 h-8 text-white" />
-              </div>
-            )}
-          </div>
-        )}
-        
-        <div className="flex-1 flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-              {new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+      <div className="flex gap-4">
+        {/* Profile Avatar */}
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+          <UserIcon className="w-5 h-5 text-gray-400" />
+        </div>
+
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header: Name, Handle, Time, Badge */}
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-bold text-gray-900 text-sm hover:underline cursor-pointer">
+                {post.username}
+              </span>
+              <span className="text-gray-400 text-xs">
+                @{post.username.toLowerCase().replace(/\s+/g, '')}
+              </span>
+              <span className="text-gray-300 text-xs">•</span>
+              <span className="text-gray-400 text-xs">
+                {formatRelativeTime(post.created_at)}
+              </span>
+            </div>
+            
+            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
               isToxic ? 'bg-red-50 text-red-500' : 
               isMisinfo ? 'bg-purple-50 text-purple-500' :
               isFlagged ? 'bg-amber-50 text-amber-500' :
@@ -294,28 +304,47 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
             </div>
           </div>
           
-          <p className="text-xl text-gray-900 leading-relaxed font-medium mb-6">
+          {/* Content */}
+          <p className="text-sm text-gray-800 leading-normal mb-4 break-words">
             {highlightContent(post.content, isToxic)}
           </p>
 
+          {/* Image */}
+          {post.image_url && (
+            <div className="mb-4 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 relative group/img">
+              <img 
+                src={post.image_url} 
+                alt="Post" 
+                className={`w-full max-h-96 object-cover transition-all ${isToxic && !isModView ? 'blur-3xl' : ''}`} 
+              />
+              {isToxic && !isModView && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-md">
+                  <EyeOff className="w-6 h-6 text-white" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI Verdict (Moderator Only) */}
           {post.reason && isModView && (
-            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 text-sm text-gray-600 mb-6 flex gap-4">
-              <Zap className="w-5 h-5 text-[#f55064] shrink-0" />
+            <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100/50 text-xs text-gray-600 mb-4 flex gap-3">
+              <Zap className="w-4 h-4 text-[#f55064] shrink-0" />
               <div>
-                <span className="text-[#f55064] font-black uppercase text-[10px] tracking-widest block mb-1">AI Verdict</span>
+                <span className="text-[#f55064] font-black uppercase text-[9px] tracking-wider block mb-0.5">AI Verdict</span>
                 {post.reason}
               </div>
             </div>
           )}
 
+          {/* Footer: Metrics and Actions */}
           {(isModView || score > 80) && (
-            <div className="mt-auto flex items-center gap-6 pt-6 border-t border-gray-50">
+            <div className="mt-auto flex items-center gap-4 pt-4 border-t border-gray-50/50">
               <div className="flex-1">
-                <div className="flex justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Risk Confidence</span>
-                  <span className={`text-[10px] font-black ${isToxic ? 'text-red-500' : 'text-gray-900'}`}>{score.toFixed(1)}%</span>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">Risk Confidence</span>
+                  <span className={`text-[9px] font-black ${isToxic ? 'text-red-500' : 'text-gray-900'}`}>{score.toFixed(0)}%</span>
                 </div>
-                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-1000 ${
                       isToxic ? 'bg-[#f55064]' : 
@@ -328,18 +357,20 @@ function PostCard({ post, onOverride, isModView }: { post: Post, onOverride: (id
               </div>
               
               {isModView && (
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button 
                     onClick={() => onOverride(post.id, 'SAFE')}
-                    className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                    title="Approve as Safe"
+                    className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
                   >
-                    <CheckCircle className="w-6 h-6" />
+                    <CheckCircle className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => onOverride(post.id, 'TOXIC')}
-                    className="p-3 rounded-2xl bg-red-50 text-red-600 hover:bg-[#f55064] hover:text-white transition-all shadow-sm"
+                    title="Reject as Toxic"
+                    className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-[#f55064] hover:text-white transition-all shadow-sm"
                   >
-                    <AlertTriangle className="w-6 h-6" />
+                    <AlertTriangle className="w-5 h-5" />
                   </button>
                 </div>
               )}

@@ -34,6 +34,7 @@ graph TD
 | **Worker Pattern** | Celery Event Loop | Provides non-blocking moderation, essential for maintaining sub-second response times for the user. |
 | **Persistence** | SQLite (SQLModel) | Optimized for portability and rapid iteration while maintaining strict relational integrity. |
 | **Auth Strategy** | JWT + RBAC | Ensures secure, stateless session management with fine-grained access control for Moderators. |
+| **Hybrid Waterfall** | Local + Cloud | Optimizes cost and speed by using local heuristics for simple cases and Cloud LLMs for nuance. |
 | **Visual Style** | Bento Grid + Tailwind | Delivers a data-dense yet intuitive layout for complex moderation metrics. |
 
 ---

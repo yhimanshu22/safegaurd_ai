@@ -22,12 +22,58 @@ class ImageAnalysisRequest(BaseModel):
     image_url: str
 
 
+def fast_moderate_text(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Approach 3: The 'Hybrid Waterfall' Path.
+    Quickly identifies 'slam-dunk' safe or toxic cases to save cost and latency.
+    """
+    text_lower = text.lower().strip()
+    print(f"DEBUG: Analyzing '{text_lower}' via Fast Pass...")
+    
+    # 1. Very safe/common greetings (Fast Pass: SAFE)
+    safe_greetings = {"hi", "hello", "hey", "good morning", "good evening", "how are you"}
+    if text_lower in safe_greetings or (len(text_lower) < 20 and not any(bad in text_lower for bad in ["bad", "hate", "stupid"])):
+        return {
+            "toxicity_score": 0.05,
+            "misinformation_score": 0.0,
+            "label": "safe",
+            "reason": "Fast Pass: Highly likely safe greeting/short text",
+            "is_fast_pass": True
+        }
+
+    # 2. Obvious toxic keywords (Fast Pass: TOXIC)
+    # In production, this would be a comprehensive library like 'profanity-check'
+    toxic_keywords = ["idiot", "stupid", "hate you", "loser", "trash"]
+    for word in toxic_keywords:
+        if word in text_lower:
+            # We don't return 1.0 immediately to allow for possible nuances, 
+            # but for this demo, we mark it as a 'Fast Pass' candidate.
+            # However, if we are UNCERTAIN, we return None to escalate to Groq.
+            if len(text_lower) < 50: # Only fast-pass short, obvious insults
+                return {
+                    "toxicity_score": 0.95,
+                    "misinformation_score": 0.0,
+                    "label": "toxic",
+                    "reason": f"Fast Pass: Detected obvious toxic keyword '{word}'",
+                    "is_fast_pass": True
+                }
+    
+    return None # Escalate to Cloud API (Groq)
+
+
 @app.post("/analyze/text")
 async def analyze_text(request: TextAnalysisRequest):
     """
-    Analyzes text for toxicity and safety using Groq's LLMs.
-    Includes threshold logic and few-shot prompting for edge cases.
+    Analyzes text for toxicity and safety using a Hybrid Waterfall approach.
+    1. Local Fast Pass (Regex/Heuristic)
+    2. Cloud LLM (Groq) for nuanced cases
     """
+    # Step 1: Hybrid Waterfall - Fast Pass
+    fast_result = fast_moderate_text(request.text)
+    if fast_result:
+        return fast_result
+
+    # Step 2: Nuanced Analysis via Groq
     try:
         # Few-shot prompting for toxicity, safety, and misinformation
         prompt = f"""
