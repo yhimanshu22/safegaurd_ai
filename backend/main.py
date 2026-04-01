@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from models import Post, User, Metric, PostRead, engine, create_db_and_tables, get_session
+from models import Post, PostCreate, User, Metric, PostRead, engine, create_db_and_tables, get_session
 from tasks import moderate_post_task
 from metrics import calculate_metrics
 from auth_utils import (
@@ -113,7 +113,7 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.post("/posts", response_model=Post)
 def create_post(
-    post: Post,
+    post_data: PostCreate,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -121,14 +121,14 @@ def create_post(
     Creates a new post and dispatches a moderation task.
     Requires authentication.
     """
-    post.user_id = current_user.id
-    session.add(post)
+    db_post = Post(**post_data.model_dump(), user_id=current_user.id)
+    session.add(db_post)
     session.commit()
-    session.refresh(post)
+    session.refresh(db_post)
 
     # Async moderation task
-    moderate_post_task.delay(post.id)
-    return post
+    moderate_post_task.delay(db_post.id)
+    return db_post
 
 
 @app.get("/posts", response_model=List[PostRead])

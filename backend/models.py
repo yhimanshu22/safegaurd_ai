@@ -10,22 +10,28 @@ class User(SQLModel, table=True):
     role: str = Field(default="user")  # "user" or "moderator"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class Post(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+class PostBase(SQLModel):
     content: str
     image_url: Optional[str] = None
-    user_id: int
+
+class Post(PostBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     status: str = "PENDING"
     toxicity_score: float = 0.0
+    misinformation_score: float = 0.0
     reason: Optional[str] = None
     manual_label: Optional[str] = None
+    manual_override: bool = False
+    correct_label: Optional[str] = None  # For metrics (True label from moderator)
+    moderated_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PostCreate(PostBase):
+    pass
 
 class PostRead(Post):
     username: Optional[str] = None
-    moderated_at: Optional[datetime] = None
-    manual_override: bool = False
-    correct_label: Optional[str] = None  # For metrics (True label from moderator)
 
 class Metric(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

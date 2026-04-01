@@ -31,19 +31,20 @@ def fast_moderate_text(text: str) -> Optional[Dict[str, Any]]:
     print(f"DEBUG: Analyzing '{text_lower}' via Fast Pass...")
     
     # 1. Very safe/common greetings (Fast Pass: SAFE)
-    safe_greetings = {"hi", "hello", "hey", "good morning", "good evening", "how are you"}
-    if text_lower in safe_greetings or (len(text_lower) < 20 and not any(bad in text_lower for bad in ["bad", "hate", "stupid"])):
+    # Reduced the 'short text' heuristic significantly to avoid false negatives.
+    safe_greetings = {"hi", "hello", "hey", "good morning", "good evening", "how are you", "gm", "gn"}
+    if text_lower in safe_greetings:
         return {
             "toxicity_score": 0.05,
             "misinformation_score": 0.0,
             "label": "safe",
-            "reason": "Fast Pass: Highly likely safe greeting/short text",
+            "reason": "Fast Pass: Confirmed safe greeting",
             "is_fast_pass": True
         }
 
     # 2. Obvious toxic keywords (Fast Pass: TOXIC)
-    # In production, this would be a comprehensive library like 'profanity-check'
-    toxic_keywords = ["idiot", "stupid", "hate you", "loser", "trash"]
+    # Added more keywords including common slurs/profanity.
+    toxic_keywords = ["idiot", "stupid", "hate you", "loser", "trash", "fuck", "shit", "bitch", "bastard", "gand", "lund", "chutiya"]
     for word in toxic_keywords:
         if word in text_lower:
             # We don't return 1.0 immediately to allow for possible nuances, 
